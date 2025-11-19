@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>손모아 모아집</title> <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+ /* (스타일 시트 내용은 이전 버전과 동일합니다.) */
+ :root{
+  --p1:#ffbab4; --p2:#ff99a5; --p3:#53d2f4; --p4:#f8a228; --p5:#f85e37; /* 메인 CTA 레드 컬러 */
+  --p6:#30ab82; --p7:#007be0; --p8:#ffc431; --p9:#6856d1; --p10:#00636b;
+  --dark:#a06023; --bg:#fffaf8; --card:#ffffff; --muted:#6f4f3a;
+  --shadow: 0 8px 20px rgba(96,48,20,0.08); --round:14px;
+ }
+ *{box-sizing:border-box}
+ body{
+  margin:0; font-family:"Baloo 2", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+  background:var(--bg); color:var(--dark); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  display:flex; flex-direction:column; align-items:center; min-height:100vh; padding:20px;
+ }
+ .container{width:100%;max-width:1100px; position:relative;}
+
+ /* 상단 버튼 컨테이너 스타일 */
+ .top-buttons {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 1000;
+ }
+ .top-button {
+  padding: 8px 15px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid var(--p5);
+  background: var(--p5); /* 레드 컬러 */
+  color: white;
+  transition: opacity 0.2s;
+  box-shadow: 0 4px 8px rgba(248,94,55,0.18);
+ }
+ .top-button:hover {
+  opacity: 0.9;
+ }
+
+ /* 헤더 제거에 따라, 버튼 아래 콘텐츠가 위로 올라오도록 margin-top을 조정하거나 제거 */
+ /* header{display:flex;align-items:center;gap:16px;margin-bottom:18px;} */ /* 이 부분은 HTML에서 삭제됩니다 */
+
+ .page{display:none}
+ .page.active{display:block}
+ .card{background:var(--card);border-radius:var(--round);padding:16px;box-shadow:var(--shadow)}
+ .landing-wrap{display:flex;gap:20px;align-items:center}
+ .landing-info{flex:1}
+ .main-cta{background:var(--p5);color:white;border:none;padding:12px 18px;border-radius:12px;font-weight:700;cursor:pointer;font-size:16px;box-shadow:0 6px 14px rgba(248,94,55,0.18)}
+ .tutorial-grid{display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
+ .step{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:12px;border:1px dashed #f0e0da;background:#fff}
+ .step .dot{width:42px;height:42px;border-radius:10px;background:var(--p2);display:flex;align-items:center;justify-content:center;font-weight:700;color:white}
+ .maker{display:flex;gap:16px;align-items:start;margin-top:12px}
+ .canvas-area{flex:1;display:flex;flex-direction:column;gap:12px;align-items:center}
+ .canvas-shell{background:#fff;border-radius:12px;padding:10px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center}
+ #drawCanvas{background:white;border-radius:10px;touch-action:none;display:block;max-width:100%;height:auto;}
+ .controls{width:360px;display:flex;flex-direction:column;gap:12px}
+ .controls .label{font-size:13px;color:var(--muted);margin-bottom:6px}
+ .color-row{display:flex;gap:8px;flex-wrap:wrap}
+ .color-swatch{width:36px;height:36px;border-radius:9px;border:2px solid rgba(0,0,0,0.06);cursor:pointer;box-shadow:0 6px 12px rgba(0,0,0,0.06)}
+ .control-btn{display:flex;gap:8px}
+ .mode-btn{flex:1;padding:10px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
+ .mode-btn.active{box-shadow:inset 0 -3px 0 rgba(0,0,0,0.05)}
+ .big-btn{padding:12px;border-radius:12px;border:none;font-weight:700;cursor:pointer}
+ .preset-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-height:300px;overflow:auto;padding:6px}
+ .preset-item{border-radius:8px;overflow:hidden;border:2px solid transparent;cursor:pointer;background:white}
+ .preset-item.selected{outline:4px solid rgba(160,96,35,0.08)}
+ .overlay{position:relative;width:600px;height:600px;}
+ .text-box{
+  position:absolute; background:rgba(255,255,255,0.9);
+  border-radius:10px; padding:6px 10px; font-family:"Nanum Pen Script","Baloo 2",sans-serif;
+  min-width:40px; min-height:32px; cursor:grab; pointer-events:auto;
+  border:1px solid rgba(96,48,20,0.15);
+  outline:none;
+  transition: box-shadow 0.2s;
+  display: flex;
+  align-items: flex-start;
+  user-select: text;
+ }
+ .text-box:focus{
+  box-shadow: 0 0 0 3px var(--p4);
+  cursor:text;
+ }
+ .text-input-ui{display:flex;gap:8px;align-items:center}
+ .masonry{column-count:4;column-gap:12px;}
+ .masonry-item{break-inside:avoid;margin-bottom:12px;background:#fff;border-radius:10px;padding:8px;box-shadow:var(--shadow);display:inline-block;width:100%;}
+ .masonry-item img{width:100%;height:auto;border-radius:8px;display:block}
+ .text-box-content{
+  flex-grow: 1;
+  min-height: 20px;
+ }
+ .text-box-delete{
+  position: absolute; top: -10px; right: -10px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--p5); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 10;
+  line-height: 1;
+  font-family: 'Material Icons';
+  opacity: 0.8;
+  transition: opacity 0.2s;
+ }
+ .text-box-delete:hover{opacity: 1;}
+ 
+ @media(max-width:980px){
+  .tutorial-grid{grid-template-columns:1fr}
+  .maker{flex-direction:column}
+  .controls{width:100%}
+  /* 모바일 반응형 캔버스 컨테이너 크기 수정 */
+  .overlay{
+   width: 100% !important; /* 92vw 대신 100%로 설정하여 flex-item으로서 가득 채우도록 변경 */
+   max-width: 600px;
+   /* height는 JS에서 1:1 비율을 유지하므로, max-width로 제한 */
+   height: auto !important; /* height를 auto로 설정하여 내부 content (canvas)에 맞추거나 JS로 조절 */
+   padding: 0;
+  }
+  #canvasContainer {
+   width: 100% !important; /* flex-item으로서 가득 채우도록 */
+   padding: 0;
+   height: auto; /* 내부 요소에 맞춰 높이 자동 조절 */
+   aspect-ratio: 1 / 1; /* 1:1 비율 유지 */
+   max-width: 600px;
+  }
+  #drawCanvas {
+   width: 100%;
+   height: 100%;
+  }
+  .masonry{column-count:2}
+ }
+ 
+ @media(max-width:520px){
+  .masonry{column-count:1}
+  /* header{flex-direction:column;align-items:flex-start;gap:8px} */ /* 헤더 삭제됨 */
+  .top-buttons {
+   top: 10px; right: 10px;
+   gap: 6px;
+  }
+  .top-button {
+   padding: 6px 10px;
+   font-size: 12px;
+  }
+ }
+ footer{margin-top:22px;color:var(--muted);font-size:13px;text-align:center;width:100%}
+</style>
+</head>
+<body>
+ <div class="container">
+ 
+    <div class="top-buttons">
+   <button id="toHomeBtn" class="top-button">처음으로</button>
+   <button id="toTutorialBtn" class="top-button">안내</button>
+   <button id="toGalleryBtn" class="top-button">작품보기</button>
+  </div>
+     
+  <section id="landing" class="page active card" style="margin-top:80px;">   <div class="landing-wrap">
+    <div class="landing-info">
+     <h2 style="margin:0 0 8px 0">손모아 모아집 프로젝트에 참여해주셔서 감사합니다!</h2>
+     <p style="margin:0 0 12px;color:var(--muted)">직접 나만의 손을 그리고 우리 모두를 위한 멋진 메시지를 적어 남겨봐요<br>아래 시작하기 버튼을 눌러 만들어볼까요?</p>
+     <button class="main-cta" id="toTutorial">시작하기</button>
+    </div>
+    <div style="width:360px">
+     <div style="border-radius:12px;padding:12px;background:var(--card);box-shadow:var(--shadow);">
+      <img src="https://i.imgur.com/D96ko1b.png" alt="logo" style="width:100%;border-radius:10px;display:block;margin-bottom:8px">
+     
+      <div style="margin-top:8px;color:var(--muted);font-size:13px">다양한 아이들의 손을 모아서 하나의 집을 만들어요.</div>
+     </div>
+    </div>
+   </div>
+  </section>
+
+  <section id="tutorial" class="page card" style="margin-top:80px">
+   <h3 style="margin-top:0">손모아 모아집! 이렇게 만들어요!</h3>
+   <div class="tutorial-grid" style="margin-top:12px">
+    <div>
+     <div class="step"><div class="dot">1</div><div><strong>내가 원하는 대로 손 모양을 만들어요</strong><div style="color:var(--muted);font-size:13px">오른쪽 공간에서 마음에 드는 손 스티커를 골라요. 또는 내가 원하는 손 모양을 직접 그릴 수 있어요!</div></div></div>
+     <div class="step" style="margin-top:10px"><div class="dot">2</div><div><strong>그림을 그리고 글씨를 써서 꾸며요</strong><div style="color:var(--muted);font-size:13px">색연필처럼 그리거나 키보드로 글자를 넣어 꾸밀 수 있어요!</div></div></div>
+     <div class="step" style="margin-top:10px"><div class="dot">3</div><div><strong>저장하기 버튼을 눌러 모아요</strong><div style="color:var(--muted);font-size:13px">완성된 손은 갤러리에 남겨져요. 다른 친구들도 볼 수 있어요!</div></div></div>
+     <div style="margin-top:12px">
+            <button class="big-btn" id="toMaker" style="background:var(--p5);color:white;border:none;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer">만들러 가기</button>
+     </div>
+    </div>
+    <div>
+     <div style="border-radius:12px;padding:10px;background:var(--card);box-shadow:var(--shadow)">
+      <div style="font-weight:700;margin-bottom:6px">예시 손 그림</div>
+      <img src="https://i.imgur.com/Rb6Ud0e.png" alt="example" style="width:100%;border-radius:8px;display:block;margin-bottom:8px">
+      <div style="color:var(--muted);font-size:13px">예시처럼 손 위에 자유롭게 그림을 그리고 꾸며 멋진 메시지를 적어보세요.</div>
+    </div>
+   </div>
+  </section>
+
+  <section id="maker" class="page card" style="margin-top:80px">
+   <h3 style="margin-top:0">나만의 손 만들기</h3>
+   <div class="maker">
+        <div class="canvas-area">
+     <div style="display:flex;gap:10px;align-items:center">
+      <div style="font-weight:700">스케치북</div>
+      <div style="color:var(--muted);font-size:13px">자유롭게 그려보세요!</div>
+      <div style="margin-left:8px"><button class="big-btn" id="backToTutorial" style="background:transparent;border:1px solid rgba(0,0,0,0.06);">← 안내 다시 보기</button></div>
+     </div>
+
+     <div class="canvas-shell">
+      <div style="position:relative">
+       <div id="canvasContainer" class="overlay card" style="width:600px;height:600px;padding:0;display:flex;align-items:center;justify-content:center;">
+        <canvas id="drawCanvas" width="600" height="600"></canvas>
+                <div id="overlay" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none"></div>
+       </div>
+     </div>
+     </div>
+
+     <div style="width:100%;display:flex;gap:8px;justify-content:center;margin-top:8px">
+      <button id="saveBtn" class="big-btn" style="background:var(--p6);color:white;border:none;border-radius:12px">저장하기</button>
+      <button id="downloadBtn" class="big-btn" style="background:var(--p8);color:#4a2f12;border:none;border-radius:12px">이미지 다운로드</button>
+      <button id="clearCanvas" class="big-btn" style="background:#fff;border:1px solid rgba(0,0,0,0.06)">처음부터 다시!</button>
+     </div>
+    </div>
+
+        <aside class="controls card">
+     <div><div class="label">손 스티커</div><div class="preset-grid" id="presetGrid"></div></div>
+
+     <div>
+      <div class="label">그리기 도구 선택</div>
+      <div class="control-btn">
+       <button id="drawMode" class="mode-btn active" style="background:var(--p1)">브러시(필기/그리기)</button>
+       <button id="textMode" class="mode-btn" style="background:var(--p2)">텍스트(키보드)</button>
+      </div>
+      <div style="margin-top:8px;color:var(--muted);font-size:13px">브러시: 색연필처럼 자유롭게 그려요. 텍스트: 상자를 만들어 키보드로 글을 써요.</div>
+     </div>
+
+     <div><div class="label">색깔</div><div class="color-row" id="colorRow"></div></div>
+     <div><div class="label">브러시 굵기</div><input type="range" id="brushSize" min="1" max="40" value="6"></div>
+     <div>
+      <div class="label">지우개</div>
+      <div style="display:flex;gap:8px"><button id="eraserBtn" class="big-btn" style="background:#fff;border:1px solid rgba(0,0,0,0.06)">지우개</button><button id="undoBtn" class="big-btn" style="background:#fff;border:1px solid rgba(0,0,0,0.06)">이전으로</button></div>
+     </div>
+
+     <div>
+      <div class="label">글씨 크기</div>
+      <div style="display:flex;gap:8px;align-items:center" class="text-input-ui">
+       <select id="textSize" style="padding:8px;border-radius:8px">
+        <option value="22">작게</option>
+        <option value="28" selected>중간</option>
+        <option value="36">크게</option>
+        <option value="48">더 크게</option>
+       </select>
+       <button id="addTextBtn" class="big-btn" style="background:var(--p4);color:#4a2f12">글상자 추가</button>
+      </div>
+      <div style="margin-top:8px;color:var(--muted);font-size:13px">글상자를 추가한 뒤 키보드로 글을 써보세요. 드래그로 위치도 이동해봐요!</div>
+     </div>
+
+     <div style="margin-top:6px;color:var(--muted);font-size:13px">
+      저장한 손 그림은 작품 갤러리에 모여요.
+     </div>
+    </aside>
+   </div>
+  </section>
+
+  <section id="gallery" class="page card" style="margin-top:80px">
+   <h3 style="margin-top:0">우리가 만든 손들</h3>
+   <div id="masonry" class="masonry"></div>
+   <div style="margin-top:10px;display:flex;gap:8px">
+    <button id="backToMaker" class="big-btn" style="background:var(--p3);color:white;border:none;border-radius:12px">다시 만들기</button>
+     </div>
+  </section>
+
+  <footer>© 손 모아 손</footer>
+ </div>
+
+<script>
+const PRESET_IMAGES = [
+ "https://i.imgur.com/mctMfV7.png", "https://i.imgur.com/3NRvvvt.png", "https://i.imgur.com/xy38dEZ.png", "https://i.imgur.com/i7OJN3C.png", "https://i.imgur.com/gDlfYWO.png", "https://i.imgur.com/DJDrd4r.png", "https://i.imgur.com/JV6GmTp.png", "https://i.imgur.com/M6o88Gq.png", "https://i.imgur.com/2AgrqhT.png", "https://i.imgur.com/YtyeAFY.png", "https://i.imgur.com/HYHtNiD.png", "https://i.imgur.com/mG2h8nT.png", "https://i.imgur.com/9R4UsgH.png", "https://i.imgur.com/01xFDoy.png", "https://i.imgur.com/HC1SkI5.png", "https://i.imgur.com/8RTxwjJ.png", "https://i.imgur.com/S9Iubn6.png", "https://i.imgur.com/Dg1Vgm1.png"
+];
+const PALETTE = ["#ffbab4","#ff99a5","#53d2f4","#f8a228","#f85e37","#30ab82","#007be0","#ffc431","#6856d1","#00636b"];
+const pages = {
+ landing: document.getElementById('landing'), tutorial: document.getElementById('tutorial'), maker: document.getElementById('maker'), gallery: document.getElementById('gallery')
+};
+const toTutorial = document.getElementById('toTutorial'); const toMaker = document.getElementById('toMaker'); const backToTutorial = document.getElementById('backToTutorial'); const backToMaker = document.getElementById('backToMaker');
+// 새로 추가된 버튼 ID를 가져옵니다.
+const toHomeBtn = document.getElementById('toHomeBtn');
+const toTutorialBtn = document.getElementById('toTutorialBtn');
+const toGalleryBtn = document.getElementById('toGalleryBtn');
+
+const presetGrid = document.getElementById('presetGrid'); const colorRow = document.getElementById('colorRow');
+const drawCanvas = document.getElementById('drawCanvas'); const overlay = document.getElementById('overlay');
+const brushSizeInput = document.getElementById('brushSize'); const drawModeBtn = document.getElementById('drawMode');
+const textModeBtn = document.getElementById('textMode'); const eraserBtn = document.getElementById('eraserBtn');
+const undoBtn = document.getElementById('undoBtn'); const addTextBtn = document.getElementById('addTextBtn');
+const textSizeSelect = document.getElementById('textSize'); const saveBtn = document.getElementById('saveBtn');
+const downloadBtn = document.getElementById('downloadBtn'); const clearCanvasBtn = document.getElementById('clearCanvas');
+const masonry = document.getElementById('masonry');
+const canvasContainer = document.getElementById('canvasContainer'); // 캔버스 컨테이너 요소
+
+const ctx = drawCanvas.getContext('2d');
+const CANVAS_SIZE = 600;
+drawCanvas.width = CANVAS_SIZE;
+drawCanvas.height = CANVAS_SIZE;
+
+let mode = 'draw';
+let currentColor = PALETTE[0];
+let brushSize = parseInt(brushSizeInput.value,10);
+let erasing = false;
+let drawing = false;
+let lastPos = {x:0,y:0};
+let selectedPreset = null;
+let undoStack = [];
+
+const STORAGE_KEY = 'sonmoa_v2_gallery';
+
+function showPage(name){
+ for(const k in pages) pages[k].classList.remove('active');
+ pages[name].classList.add('active');
+
+ if (name === 'gallery') {
+  renderGallery();
+ }
+}
+
+// 기존 페이지 이동 이벤트 리스너
+toTutorial.addEventListener('click', ()=> showPage('tutorial'));
+toMaker.addEventListener('click', ()=> showPage('maker'));
+backToTutorial.addEventListener('click', ()=> showPage('tutorial'));
+backToMaker.addEventListener('click', ()=> showPage('maker'));
+
+// 상단 버튼 이벤트 리스너
+toHomeBtn.addEventListener('click', ()=> showPage('landing'));
+toTutorialBtn.addEventListener('click', ()=> showPage('tutorial'));
+toGalleryBtn.addEventListener('click', ()=> showPage('gallery'));
+
+function applyPresetToCanvas(src){ pushUndo(); const img = new Image(); img.crossOrigin = 'anonymous'; img.onload = ()=>{ ctx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE); ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE); let iw = img.width, ih = img.height; const scale = Math.min(CANVAS_SIZE/iw, CANVAS_SIZE/ih); const nw = iw * scale, nh = ih * scale; const dx = (CANVAS_SIZE - nw)/2, dy = (CANVAS_SIZE - nh)/2; ctx.drawImage(img, dx, dy, nw, nh); overlay.innerHTML = ''; }; img.src = src; }
+function createPresetGrid(){ presetGrid.innerHTML=''; PRESET_IMAGES.forEach((src, idx)=>{ const div = document.createElement('div'); div.className='preset-item'; div.innerHTML = `<img src="${src}" style="width:100%;display:block">`; div.dataset.idx = idx; div.addEventListener('click', ()=>{ document.querySelectorAll('.preset-item').forEach(p=>p.classList.remove('selected')); div.classList.add('selected'); selectedPreset = src; applyPresetToCanvas(src); }); presetGrid.appendChild(div); }); }
+createPresetGrid();
+
+function createColorSwatches(){
+ colorRow.innerHTML = '';
+ PALETTE.forEach(c=>{
+  const s = document.createElement('div');
+  s.className='color-swatch';
+  s.style.background = c;
+  s.addEventListener('click', ()=> {
+   currentColor = c;
+   erasing = false;
+   eraserBtn.style.background = '#fff';
+   eraserBtn.classList.remove('active');
+  });
+  colorRow.appendChild(s);
+ });
+}
+createColorSwatches();
+
+// 캔버스 좌표를 얻는 함수 (모바일/터치 지원)
+function getPos(evt){
+ const rect = drawCanvas.getBoundingClientRect();
+ const event = evt.touches ? evt.touches[0] : evt;
+
+ const x = event.clientX - rect.left;
+ const y = event.clientY - rect.top;
+
+ // 캔버스 엘리먼트의 실제 픽셀 크기(drawCanvas.width)와 CSS 렌더링 크기(rect.width)의 비율을 사용해 보정
+ return {
+  x: x * (drawCanvas.width / rect.width),
+  y: y * (drawCanvas.height / rect.height)
+ };
+}
+
+function startDraw(e){
+ if(mode !== 'draw') return;
+
+ if(e.type.startsWith('touch')) {
+  e.preventDefault();
+ } else if(e.type === 'mousedown' && e.button !== 0) {
+  return;
+ }
+ if (e.target !== drawCanvas) return; // 드로잉 모드에서는 캔버스 위에서만 작동
+
+ drawing = true;
+ lastPos = getPos(e);
+
+ ctx.lineCap = 'round';
+ ctx.lineJoin = 'round';
+ ctx.globalCompositeOperation = erasing ? 'destination-out' : 'source-over';
+ ctx.strokeStyle = erasing ? 'rgba(0,0,0,1)' : currentColor;
+ ctx.lineWidth = brushSize;
+
+ ctx.beginPath();
+ ctx.moveTo(lastPos.x - 0.5, lastPos.y);
+ ctx.lineTo(lastPos.x + 0.5, lastPos.y);
+ ctx.stroke();
+ ctx.closePath();
+}
+
+function moveDraw(e){
+ if(!drawing || mode !== 'draw') return;
+
+ if (e.type.startsWith('touch')) {
+  e.preventDefault();
+ }
+
+ const p = getPos(e);
+
+ ctx.beginPath();
+ ctx.moveTo(lastPos.x, lastPos.y);
+ ctx.lineTo(p.x, p.y);
+ ctx.stroke();
+ ctx.closePath();
+
+ lastPos = p;
+}
+
+function endDraw(e){
+ if(!drawing) return;
+ drawing = false;
+ pushUndo();
+ ctx.globalCompositeOperation = 'source-over';
+}
+
+// 캔버스 드로잉에 터치 이벤트를 명확히 바인딩합니다.
+drawCanvas.addEventListener('mousedown', startDraw);
+drawCanvas.addEventListener('mousemove', moveDraw);
+drawCanvas.addEventListener('mouseup', endDraw);
+drawCanvas.addEventListener('mouseleave', endDraw);
+
+drawCanvas.addEventListener('touchstart', startDraw, {passive:false});
+drawCanvas.addEventListener('touchmove', moveDraw, {passive:false});
+drawCanvas.addEventListener('touchend', endDraw);
+drawCanvas.addEventListener('touchcancel', endDraw);
+
+
+/* (모드 변경 로직) */
+
+brushSizeInput.addEventListener('input', (e)=> { brushSize = parseInt(e.target.value,10); });
+
+drawModeBtn.addEventListener('click', ()=>{
+ mode = 'draw';
+ drawModeBtn.classList.add('active');
+ textModeBtn.classList.remove('active');
+ overlay.style.pointerEvents = 'none';
+});
+
+// **수정**: 텍스트 모드 버튼 클릭 시 바로 글상자를 생성하도록 로직 추가
+textModeBtn.addEventListener('click', ()=>{
+ mode = 'text';
+ textModeBtn.classList.add('active');
+ drawModeBtn.classList.remove('active');
+ overlay.style.pointerEvents = 'auto';
+ createTextBox(); // 텍스트 모드 선택 시 즉시 글상자 생성 및 포커스
+});
+
+eraserBtn.addEventListener('click', ()=>{
+ erasing = !erasing;
+ if(erasing) {
+  eraserBtn.style.background = '#fff3f0';
+ } else {
+  eraserBtn.style.background = '';
+ }
+});
+
+function pushUndo(){
+ try{
+  const data = drawCanvas.toDataURL();
+  undoStack.push(data);
+  if(undoStack.length>30) undoStack.shift();
+ }catch(e){}
+}
+undoBtn.addEventListener('click', ()=>{
+ if(undoStack.length < 2) {
+  if(undoStack.length === 1) undoStack.pop();
+  ctx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+  if(selectedPreset) applyPresetToCanvas(selectedPreset);
+  return;
+ }
+ undoStack.pop();
+ const last = undoStack[undoStack.length - 1];
+
+ ctx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+ const img = new Image();
+ img.onload = ()=> {
+  ctx.drawImage(img,0,0);
+ };
+ img.src = last;
+});
+clearCanvasBtn.addEventListener('click', ()=>{
+ if(!confirm('캔버스를 초기화할까요? (주의: 되돌릴 수 없습니다)')) return;
+ ctx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+ ctx.fillStyle = '#ffffff';
+ ctx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+ overlay.innerHTML='';
+ selectedPreset = null;
+ document.querySelectorAll('.preset-item').forEach(p=>p.classList.remove('selected'));
+ undoStack = [];
+});
+
+function createTextBox(){
+ const div = document.createElement('div');
+ div.className = 'text-box';
+ div.setAttribute('tabindex', '0');
+
+ const content = document.createElement('span');
+ content.className = 'text-box-content';
+ content.contentEditable = 'true';
+ content.innerText = '여기에 글을 써보세요';
+ content.style.fontSize = textSizeSelect.value + 'px';
+
+ const deleteBtn = document.createElement('div');
+ deleteBtn.className = 'text-box-delete';
+ deleteBtn.textContent = 'close';
+ deleteBtn.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  if(confirm('이 글상자를 삭제할까요?')) div.remove();
+ });
+
+ div.appendChild(content);
+ div.appendChild(deleteBtn);
+
+ div.style.left = '40px';
+ div.style.top = '40px';
+ overlay.appendChild(div);
+
+ makeDraggable(div, content);
+
+ content.addEventListener('dblclick', (e)=>{ e.stopPropagation(); content.focus(); });
+
+ setTimeout(()=> { content.focus(); placeCaretAtEnd(content); }, 50);
+ return div;
+}
+
+// 이 버튼은 추가적인 글상자 생성을 위해 그대로 유지
+addTextBtn.addEventListener('click', ()=> {
+ if(mode !== 'text') {
+  mode = 'text'; textModeBtn.classList.add('active'); drawModeBtn.classList.remove('active');
+ }
+ overlay.style.pointerEvents = 'auto';
+ createTextBox();
+});
+
+// 텍스트 박스 드래그 기능 (모바일/터치 지원)
+function makeDraggable(el, handle){
+ let dragging=false, ox=0, oy=0;
+
+ const startDrag = (e) => {
+  // 텍스트 편집 중에는 드래그 방지
+  if(e.target.contentEditable === 'true') return;
+
+  e.preventDefault(); e.stopPropagation();
+  dragging=true;
+  const rect = el.getBoundingClientRect();
+  const event = e.touches ? e.touches[0] : e;
+ 
+  ox = event.clientX - rect.left;
+  oy = event.clientY - rect.top;
+  el.style.cursor = 'grabbing';
+ 
+  document.addEventListener('mousemove', moveDrag);
+  document.addEventListener('mouseup', endDrag);
+  document.addEventListener('touchmove', moveDrag, {passive:false});
+  document.addEventListener('touchend', endDrag);
+ };
+
+ const moveDrag = (e) => {
+  if(!dragging) return;
+  e.preventDefault();
+  
+  // 텍스트 박스의 위치 계산은 오버레이 컨테이너를 기준으로 해야 함
+  const parentRect = overlay.getBoundingClientRect();
+  const event = e.touches ? e.touches[0] : e;
+ 
+  let nx = event.clientX - parentRect.left - ox;
+  let ny = event.clientY - parentRect.top - oy;
+ 
+  nx = Math.max(0, Math.min(nx, parentRect.width - el.offsetWidth));
+  ny = Math.max(0, Math.min(ny, parentRect.height - el.offsetHeight));
+
+  el.style.left = nx + 'px';
+  el.style.top = ny + 'px';
+ };
+
+ const endDrag = () => {
+  dragging=false;
+  el.style.cursor='grab';
+  document.removeEventListener('mousemove', moveDrag);
+  document.removeEventListener('mouseup', endDrag);
+  document.removeEventListener('touchmove', moveDrag);
+  document.removeEventListener('touchend', endDrag);
+ };
+
+ el.addEventListener('mousedown', startDrag);
+ el.addEventListener('touchstart', startDrag, {passive:false});
+}
+
+function placeCaretAtEnd(el){
+ const range = document.createRange();
+ const sel = window.getSelection();
+ range.selectNodeContents(el);
+ range.collapse(false);
+ sel.removeAllRanges();
+ sel.addRange(range);
+}
+
+textSizeSelect.addEventListener('change', (e)=>{
+ const size = e.target.value + 'px';
+ const activeElement = document.activeElement;
+ if(activeElement && activeElement.classList.contains('text-box-content')){
+  activeElement.style.fontSize = size;
+ }
+});
+
+document.addEventListener('keydown', (e)=>{
+ const sel = document.activeElement;
+ if(sel && sel.classList && sel.classList.contains('text-box') && (e.key === 'Delete' || e.key === 'Backspace')){
+  e.preventDefault();
+  if(confirm('선택한 글상자를 삭제할까요?')) sel.remove();
+ }
+ else if (sel && sel.classList && sel.classList.contains('text-box-content') && sel.textContent.trim() === '' && (e.key === 'Delete' || e.key === 'Backspace')){
+  e.preventDefault();
+  if(confirm('내용이 비었습니다. 이 글상자를 삭제할까요?')) sel.parentElement.remove();
+ }
+});
+
+function bakeCanvasAndOverlay(){
+ const temp = document.createElement('canvas'); temp.width = CANVAS_SIZE; temp.height = CANVAS_SIZE; const tctx = temp.getContext('2d');
+ tctx.fillStyle = '#ffffff'; tctx.fillRect(0,0,temp.width,temp.height); tctx.drawImage(drawCanvas, 0, 0);
+ const boxes = overlay.querySelectorAll('.text-box');
+ 
+ // 캔버스의 실제 픽셀 크기(CANVAS_SIZE)와 오버레이 컨테이너의 CSS 픽셀 크기 간의 비율을 계산
+ const canvasRect = canvasContainer.getBoundingClientRect();
+ const scaleFactor = CANVAS_SIZE / canvasRect.width; 
+
+ boxes.forEach(box=>{
+  const content = box.querySelector('.text-box-content');
+  if (!content) return;
+
+  const style = window.getComputedStyle(content);
+  const fontSize = parseFloat(style.fontSize);
+  // CSS left/top 값
+  const left = parseFloat(box.style.left || 0);
+  const top = parseFloat(box.style.top || 0);
+  const text = content.innerText;
+ 
+  // Text
+  tctx.fillStyle = '#000';
+  tctx.font = `${fontSize * scaleFactor}px Nanum Pen Script, Baloo 2`;
+  tctx.textBaseline = 'top';
+ 
+  const textOffsetX = 10;
+  const textOffsetY = 8;
+  const lineHeightFactor = 1.05; // 폰트 크기에 따른 줄 간격 보정
+
+  const lines = text.split('\n');
+  for(let i=0;i<lines.length;i++){
+   // CSS 좌표 (left, top)에 scaleFactor를 곱하여 캔버스 픽셀 좌표로 변환
+   tctx.fillText(
+    lines[i],
+    (left + textOffsetX) * scaleFactor,
+    (top + textOffsetY) * scaleFactor + (i * fontSize * lineHeightFactor * scaleFactor)
+   );
+  }
+ });
+ return temp.toDataURL('image/png');
+}
+
+function loadGallery(){ try{ const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : []; }catch(e){ return []; } }
+function saveGallery(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); renderGallery(); }
+
+saveBtn.addEventListener('click', ()=>{ const dataUrl = bakeCanvasAndOverlay(); const arr = loadGallery(); const item = { id: Date.now(), dataUrl, created: new Date().toISOString() }; arr.unshift(item); saveGallery(arr); showPage('gallery'); });
+downloadBtn.addEventListener('click', ()=>{ const dataUrl = bakeCanvasAndOverlay(); const a = document.createElement('a'); a.href = dataUrl; a.download = 'sonmoa_' + Date.now() + '.png'; a.click(); });
+
+function renderGallery(){
+ const arr = loadGallery(); masonry.innerHTML = '';
+ if(arr.length === 0){ masonry.innerHTML = '<div style="color:var(--muted)">아직 저장된 패널이 없습니다. 먼저 하나 만들어볼까요?</div>'; return; }
+ arr.forEach(item=>{
+  const card = document.createElement('div'); card.className = 'masonry-item';
+  const img = document.createElement('img'); img.src = item.dataUrl;
+  const meta = document.createElement('div'); meta.style.display='flex';meta.style.justifyContent='space-between';meta.style.alignItems='center';meta.style.marginTop='8px';
+  const time = document.createElement('div'); time.style.fontSize='12px'; time.style.color='var(--muted)'; time.textContent = new Date(item.created).toLocaleString();
+  const actions = document.createElement('div');
+  const viewBtn = document.createElement('button'); viewBtn.className='big-btn'; viewBtn.style.padding='6px 8px'; viewBtn.style.border='none'; viewBtn.style.background='var(--p3)'; viewBtn.style.color='white'; viewBtn.textContent='열기';
+  const dlBtn = document.createElement('button'); dlBtn.className='big-btn'; dlBtn.style.padding='6px 8px'; dlBtn.style.border='none'; dlBtn.style.background='var(--p8)'; dlBtn.style.color='#4a2f12'; dlBtn.textContent='다운';
+  actions.appendChild(viewBtn); actions.appendChild(dlBtn);
+  viewBtn.addEventListener('click', ()=>{ const w = window.open(); w.document.write('<title>손 패널</title><img src="'+item.dataUrl+'" style="max-width:100%;display:block;margin:12px auto">'); });
+  dlBtn.addEventListener('click', ()=>{ const a = document.createElement('a'); a.href = item.dataUrl; a.download = 'sonmoa_' + item.id + '.png'; a.click(); });
+  meta.appendChild(time); meta.appendChild(actions);
+  card.appendChild(img); card.appendChild(meta); masonry.appendChild(card);
+ });
+}
+renderGallery();
+
+(function initCanvas(){
+ ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+ const img = new Image(); img.crossOrigin = 'anonymous';
+ img.onload = ()=> { ctx.save(); ctx.globalAlpha = 0.06; const scale = Math.min(CANVAS_SIZE/img.width, CANVAS_SIZE/img.height); const nw = img.width*scale, nh = img.height*scale; ctx.drawImage(img, (CANVAS_SIZE-nw)/2, (CANVAS_SIZE-nh)/2, nw, nh); ctx.restore(); };
+ img.src = PRESET_IMAGES[0];
+})();
+currentColor = PALETTE[0];
+</script>
+</body>
+</html>
